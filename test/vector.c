@@ -54,7 +54,7 @@ int main(void) {
     for (int i = 0; i < SAMPLE_SIZE; i++, size *= 2) {
         clock_t t = clock();
         for (int j = 0; j < size; j++) {
-            long val = rand();
+            int val = rand();
             vector_push(&vec, &val);
         }
 
