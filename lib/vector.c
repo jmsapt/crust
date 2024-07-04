@@ -1,5 +1,4 @@
 #define VECTOR_DEFAULT 64
-#define QUEUE_DEFAULT 64
 
 #ifndef PANIC
 #define PANIC(msg)                                                             \

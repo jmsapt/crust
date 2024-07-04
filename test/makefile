@@ -1,11 +1,12 @@
 CC := gcc
-CFLAGS = -Wall -g -fno-omit-frame-pointer -O3 # -fsanitize=address 
+CFLAGS = -Wall -g -fno-omit-frame-pointer -O3 -fsanitize=address 
 SRCS := $(wildcard *.c)
+LIB  := $(wildcard ../lib/*.c)
 BINS := $(SRCS:.c=)
 
 all: $(BINS)
 
-%: %.c
+%: %.c ../lib/%.c
 	$(CC) $(CFLAGS) -o $@ $< ../lib/$<
 
 .PHONY: clean

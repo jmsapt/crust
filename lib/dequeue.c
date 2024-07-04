@@ -3,13 +3,20 @@
 #include <stdlib.h>
 #include <string.h>
 
-
+#define QUEUE_DEFAULT 32
+#ifndef PANIC
+#define PANIC(msg)                                                             \
+    {                                                                          \
+        fprintf(stderr, "PANIC: %s\n", msg);                                   \
+        exit(1);                                                               \
+    };
+#endif
 // TODO currently broken. NEED TO FIX!!!!!
 
 struct Dequeue dequeue_create(size_t size) {
-    void **b = malloc(sizeof(QUEUE_DEFAULT * size));
+    void *buffer = malloc(size * QUEUE_DEFAULT);
 
-    if (b == NULL)
+    if (buffer == NULL)
         PANIC("buffer could not be allocated in dequeue_create");
 
     struct Dequeue q = {
@@ -18,7 +25,7 @@ struct Dequeue dequeue_create(size_t size) {
         .tail = 0,
         .size = size,
         .capacity = QUEUE_DEFAULT,
-        .buffer = b,
+        .buffer = buffer,
     };
 
     return q;
@@ -72,7 +79,6 @@ int dequeue_pop_head(struct Dequeue *q, void *element) {
         PANIC("queue pointer suppiled to queue_push is NULL");
 
     memcpy(element, q->buffer + q->size * q->head, q->size);
-    printf("q cap: %d\n", q->capacity);
     q->head = (q->head + 1) % q->capacity;
     q->len--;
 
@@ -82,17 +88,27 @@ int dequeue_pop_head(struct Dequeue *q, void *element) {
 int dequeue_push_tail(struct Dequeue *q, void *element) {
     if (q == NULL)
         PANIC("queue pointer suppiled to queue_push is NULL");
-    // TODO make this 1 line
+
     if (q->len == q->capacity) {
         if (dequeue_grow(q, q->capacity) < 0)
             return -1;
     }
 
-    q->tail = (q->capacity + q->tail + 1) % q->capacity;
-    memcpy(q->buffer + q->size * q->tail, element, q->size);
-    q->len++;
 
-    printf("q cap: %d\n", q->capacity);
+    // speacial case when empty
+    if (q->len == 0) {
+        q->head = 0;
+        q->tail = 0;
+    }
+    // otherwise copy to tail-th + 1
+    else {
+        q->tail = (q->tail + 1) % q->capacity;
+    }
+
+    q->len++;
+    memcpy(q->buffer + q->tail * q->size, element, q->size);
+    printf("(len, cap, head, tail, size) => (%d, %d, %d, %d, %d)\n", q->len,
+           q->capacity, q->head, q->tail, (int)q->size);
     return q->len;
 }
 
@@ -104,16 +120,24 @@ int dequeue_push_head(struct Dequeue *q, void *element) {
             return -1;
     }
 
-    q->head = (q->head + 1) % q->capacity;
+    // speacial case when empty
+    if (q->len == 0) {
+        q->head = 0;
+        q->tail = 0;
+    }
+    // otherwise copy to tail-th + 1
+    else {
+        q->head = (q->capacity + q->head - 1) % q->capacity;
+    }
+
     memcpy(q->buffer + q->size * q->head, element, q->size);
     q->len++;
 
-    printf("q cap: %d\n", q->capacity);
     return q->len;
 }
 
 int dequeue_grow(struct Dequeue *q, unsigned int n) {
-    void **new_buf;
+    void *new_buf;
     unsigned int new_capacity;
     new_capacity = q->capacity + n;
     new_buf = malloc(q->size * new_capacity);
@@ -121,37 +145,33 @@ int dequeue_grow(struct Dequeue *q, unsigned int n) {
         return -1;
 
     unsigned int new_tail, new_head;
-    if (q->head > q->tail) {
-        memcpy(q->buffer + q->size * q->tail, new_buf + q->size * q->tail,
-               q->size * (q->head - q->tail));
-        new_tail = q->tail;
-        new_head = q->head;
+    if (q->head <= q->tail) {
+        memcpy(new_buf, q->buffer + q->size * q->head, q->size * q->len);
+        new_tail = q->len - 1;
+        new_head = 0;
     }
     else {
-        new_head = q->head;
-        new_tail = new_capacity - q->tail - 1;
-        memcpy(q->buffer, new_buf, new_head * q->size);
-        memcpy(q->buffer + q->size * q->tail, new_buf + q->size * new_tail,
-               new_capacity - new_tail - 1);
+        memcpy(new_buf, q->buffer + q->head * q->size,
+               q->capacity - q->head - 1);
+        memcpy(new_buf + q->capacity - q->head - 1, q->buffer, q->tail);
+        // printf("len : new_len => %d %d\n", q->len, q->tail + q->capacity -
+        // q->head - 1);
+        new_head = 0;
+        new_tail = q->len - 1;
     }
 
     q->tail = new_tail;
     q->head = new_head;
     q->capacity = new_capacity;
+    free(q->buffer);
     q->buffer = new_buf;
 
     return q->capacity;
 }
 
-void dequeue_destroy(struct Dequeue *q, int free_elements) {
+void dequeue_destroy(struct Dequeue *q) {
     if (q == NULL)
         PANIC("qector pointer suppiled to vector_destroy is NULL");
-
-    if (free_elements) {
-        for (int i = 0; i < q->len; i++) {
-            free(*(q->buffer + q->size * i));
-        }
-    }
 
     free(q->buffer);
 }

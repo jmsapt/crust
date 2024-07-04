@@ -1,17 +1,10 @@
 #include <stdlib.h>
-#define QUEUE_DEFAULT 64
-#ifndef PANIC
-#define PANIC(msg)                                                             \
-    {                                                                          \
-        fprintf(stderr, "PANIC: %s\n", msg);                                   \
-        exit(1);                                                               \
-    };
-#endif
+
 
 // Regular queue implemented as a vector with a ring buffer. Reallocates when
 // full, doubling in size.
 struct Dequeue {
-    void **buffer;
+    void *buffer;
     size_t size;
     unsigned int len;
     unsigned int capacity;
@@ -26,4 +19,4 @@ int dequeue_pop_head(struct Dequeue *q, void *element);
 int dequeue_push_tail(struct Dequeue *q, void *element);
 int dequeue_push_head(struct Dequeue *q, void *element);
 int dequeue_grow(struct Dequeue *q, unsigned int n);
-void dequeue_destroy(struct Dequeue *q, int free_elements);
+void dequeue_destroy(struct Dequeue *q);
