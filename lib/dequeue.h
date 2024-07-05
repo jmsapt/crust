@@ -9,7 +9,6 @@ struct Dequeue {
     unsigned int len;
     unsigned int capacity;
     unsigned int head;
-    unsigned int tail;
 };
 
 struct Dequeue dequeue_create(size_t size);
