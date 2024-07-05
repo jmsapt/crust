@@ -6,7 +6,7 @@
 #include <string.h>
 // Capacity factor to prompt reallocation of the
 // buffer (and rehashing)
-#define MAX_LOAD_FACTOR 0.6
+#define MAX_LOAD_FACTOR 0.7
 
 // Default initial buffer size
 #define HASHMAP_DEFAULT 256

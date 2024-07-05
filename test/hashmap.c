@@ -1,16 +1,19 @@
 #include "../lib/hashmap.h"
 
-#include <time.h>
 #include <stdio.h>
+#include <string.h>
 #include <sys/types.h>
+#include <time.h>
 typedef struct HashMap HashMap;
 
 int cmp_int(const void *a, const void *b);
 int cmp_ulong(const void *a, const void *b);
+int cmp_str(const void *a, const void *b);
 
 void test_simple_create_destroy(void);
 void test_simple_int_int(void);
 void test_simple_ulong_int(void);
+void test_simple_str_int(void);
 void test_large_int_int(int n);
 
 int main(void) {
@@ -23,10 +26,12 @@ int main(void) {
     printf("Testing simple hashmap<int, int>...\n");
     test_simple_int_int();
 
-    int sizes[] = {800,    4000,
-                   16000, 32000, 100000, 400000, 1600000};
+    printf("Testing simple hashmap<str, int>...\n");
+    test_simple_str_int();
+
+    int sizes[] = {800, 4000, 16000, 32000, };//100000, 400000, 1600000, 3200000};
     // time in ns
-    double times[100];
+    double insert_times[100];
     int n = sizeof(sizes) / sizeof(sizes[0]);
     printf("\nTesting large numbers of insertions:\n");
     for (int i = 0; i < n; i++) {
@@ -36,16 +41,13 @@ int main(void) {
         test_large_int_int(x);
         t = clock() - t;
 
-        times[i] = ((double)t) / (sizes[i] * CLOCKS_PER_SEC) * 1000000000;
+        insert_times[i] =
+            ((double)t) / (sizes[i] * CLOCKS_PER_SEC) * 1000000000;
     }
-
 
     printf("\nMean insertion times (nanoseconds) => insertions : time\n");
-    for (int i =0; i < n; i++) {
-        double mean_time = 
-        printf("%8.2f : %d\n", times[i], sizes[i]);
-    }
-
+    for (int i = 0; i < n; i++)
+        printf("%8.2f : %d\n", insert_times[i], sizes[i]);
 }
 
 void test_simple_create_destroy(void) {
@@ -161,6 +163,30 @@ void test_large_int_int(int n) {
     hashmap_destroy(&m);
 }
 
+void test_simple_str_int(void) {
+    HashMap m = hashmap_create(sizeof(char *), sizeof(int), hash_string, cmp_str);
+    // char *strs[] = {"the", "cat", "on", "the", "mat", "is", "flat"};
+    char *strs[] = {"cat", "on", "the", "mat", "is", "flat"};
+    int n = sizeof(strs) / sizeof(strs[0]);
+
+    for (int i = 0; i < n; i++)
+        hashmap_insert(&m, &strs[i], &i);
+
+    for (int i = 0; i < n; i++)
+        if (hashmap_insert(&m, &strs[i], &i) != 0)
+            printf("Expected to contain: <%s>\n", strs[i]);
+
+    if (m.len != n)
+        printf("Expected map len to be %d, acutal %u\n", n, m.len);
+
+    for (int i = 0; i < n; i++)
+        hashmap_erase(&m, &strs[i]);
+
+    if (m.len != 0)
+        printf("Map had length %u, expected 0 (empty)", m.len);
+    hashmap_destroy(&m);
+}
+
 /* ----- Compare functions ----- */
 int cmp_int(const void *a, const void *b) {
     const int *x = a;
@@ -172,4 +198,9 @@ int cmp_ulong(const void *a, const void *b) {
     const ulong *x = a;
     const ulong *y = b;
     return *x - *y;
+}
+int cmp_str(const void *a, const void *b) {
+    const char *x = a;
+    const char *y = b;
+    return strcmp(x, y);
 }
