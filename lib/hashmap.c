@@ -45,7 +45,7 @@ inline static int buffer_insert(Bucket **buffer, Bucket *bucket,
                                 int (*cmp_fn)(const void *a, const void *b),
                                 unsigned long i, size_t v_size) {
     NULL_CHECK(bucket, "Bucket cannot be null");
-    
+
     Bucket *prev, *curr = buffer[i];
     if (curr == NULL) {
         buffer[i] = bucket;
@@ -56,7 +56,6 @@ inline static int buffer_insert(Bucket **buffer, Bucket *bucket,
     // find tail
     while (curr != NULL) {
         if (cmp_fn(curr->key, bucket->key) == 0) {
-            void *tmp = curr->val;
             memcpy(curr->val, bucket->val, v_size);
 
             // discard bucket
@@ -87,18 +86,16 @@ inline static int expand_buffer(HashMap *m, unsigned long n) {
 
     // rehash and reinsert each element, iterating over old buffer
     for (int i = 0; i < m->capacity; i++) {
-        Bucket *prev,*curr = m->bucket_buf[i];
+        Bucket *prev, *curr = m->bucket_buf[i];
 
         while (curr != NULL) {
             // for each node in the bucket linked list,
-            // insert into new buffer 
+            // insert into new buffer
             prev = curr;
             curr = curr->next;
             unsigned long new_i = buffer_index(m->hash_fn, new_cap, prev->key);
             buffer_insert(new_buf, prev, m->cmp_fn, new_i, m->val_size);
         }
-
-
     }
 
     // free old buffer
@@ -168,7 +165,6 @@ void hashmap_destroy(struct HashMap *m) {
         while (curr != NULL) {
             prev = curr;
             curr = curr->next;
-            // printf("Freeing %ld\n", *((unsigned long *) prev->key));
 
             free(prev->key);
             free(prev->val);
@@ -195,7 +191,6 @@ void hashmap_destroy(struct HashMap *m) {
  */
 int hashmap_insert(struct HashMap *m, const void *key, const void *val) {
     double load = ((double)m->len) / m->capacity;
-    const unsigned long *x = key;
     if (load >= MAX_LOAD_FACTOR)
         expand_buffer(m, m->capacity);
 
@@ -225,7 +220,7 @@ void hashmap_erase(struct HashMap *m, const void *key) {
     Bucket *prev = NULL;
     Bucket *curr = m->bucket_buf[i];
     while (curr != NULL) {
-        if (m->cmp_fn(&curr->key, &key)) {
+        if (m->cmp_fn(curr->key, key) == 0) {
             // link prev to next nodes
             if (prev == NULL) {
                 // head case
@@ -244,6 +239,8 @@ void hashmap_erase(struct HashMap *m, const void *key) {
             m->len--;
             return;
         }
+
+        curr = curr->next;
     }
 }
 
@@ -263,9 +260,9 @@ void *hashmap_keys(const HashMap *m) {
  * contained in the map.
  */
 int hashmap_contains(const struct HashMap *m, const void *key) {
+    // check linked list for node
     unsigned long i = buffer_index(m->hash_fn, m->capacity, key);
 
-    // check linked list for node
     Bucket *curr = m->bucket_buf[i];
     while (curr) {
         if (m->cmp_fn(curr->key, key) == 0)
@@ -318,12 +315,12 @@ unsigned long hash_long(const void *key) {
 unsigned long hash_string(const void *key) {
     // sdbm hasing algorithm
     // <http://www.cse.yorku.ca/~oz/hash.html>
-    const unsigned char *str = key;
-    unsigned long hash = 5381;
+    const unsigned char *str = *(const unsigned char **)key;
+    unsigned long hash = 0;
     int c;
 
     while ((c = *str++))
-        hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+        hash = c + (hash << 6) + (hash << 16) - hash;
 
     return hash;
 }

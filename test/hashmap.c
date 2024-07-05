@@ -29,7 +29,7 @@ int main(void) {
     printf("Testing simple hashmap<str, int>...\n");
     test_simple_str_int();
 
-    int sizes[] = {800, 4000, 16000, 32000, };//100000, 400000, 1600000, 3200000};
+    int sizes[] = {800, 4000, 16000, 32000, 100000, 400000, 1600000, 3200000};
     // time in ns
     double insert_times[100];
     int n = sizeof(sizes) / sizeof(sizes[0]);
@@ -164,16 +164,19 @@ void test_large_int_int(int n) {
 }
 
 void test_simple_str_int(void) {
-    HashMap m = hashmap_create(sizeof(char *), sizeof(int), hash_string, cmp_str);
+    HashMap m =
+        hashmap_create(sizeof(char *), sizeof(int), hash_string, cmp_str);
     // char *strs[] = {"the", "cat", "on", "the", "mat", "is", "flat"};
-    char *strs[] = {"cat", "on", "the", "mat", "is", "flat"};
+    char *strs[] = {"on\0", "the\0", "mat\0", "is\0", "flat\0", "fat\0"};
     int n = sizeof(strs) / sizeof(strs[0]);
 
-    for (int i = 0; i < n; i++)
-        hashmap_insert(&m, &strs[i], &i);
+    for (int i = 0; i < n; i++) {
+        char **ptr = &strs[i];
+        hashmap_insert(&m, ptr, &i);
+    }
 
     for (int i = 0; i < n; i++)
-        if (hashmap_insert(&m, &strs[i], &i) != 0)
+        if (hashmap_contains(&m, &strs[i]) == 0)
             printf("Expected to contain: <%s>\n", strs[i]);
 
     if (m.len != n)
@@ -199,8 +202,9 @@ int cmp_ulong(const void *a, const void *b) {
     const ulong *y = b;
     return *x - *y;
 }
+
 int cmp_str(const void *a, const void *b) {
-    const char *x = a;
-    const char *y = b;
-    return strcmp(x, y);
+    const char **x = (const char **)a;
+    const char **y = (const char **)b;
+    return strcmp(*x, *y);
 }
