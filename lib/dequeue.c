@@ -13,7 +13,6 @@
 #endif
 
 #define INDEX(head, cap, n) (((cap) + (head) + (n)) % (cap))
-// TODO currently broken. NEED TO FIX!!!!!
 
 struct Dequeue dequeue_create(size_t size) {
     void *buffer = malloc(size * QUEUE_DEFAULT);

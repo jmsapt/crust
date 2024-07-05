@@ -1,5 +1,7 @@
+#pragma once
 #include <stdlib.h>
 
+// TODO add documentation
 
 // Regular queue implemented as a vector with a ring buffer. Reallocates when
 // full, doubling in size.

@@ -1,5 +1,5 @@
 CC := gcc
-CFLAGS = -Wall -g -fno-omit-frame-pointer -O3 -fsanitize=address 
+CFLAGS = -Wall -g -fno-omit-frame-pointer -ggdb3 -fsanitize=address 
 SRCS := $(wildcard *.c)
 LIB  := $(wildcard ../lib/*.c)
 BINS := $(SRCS:.c=)

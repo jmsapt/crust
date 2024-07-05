@@ -1,3 +1,4 @@
+#pragma once
 #include <stdlib.h>
 
 /* Contigous buffer that is reallocated when len == capacity.

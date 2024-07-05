@@ -2,9 +2,10 @@
 C implementation of useful Rust/C++ datastructures.
 
 TODO list:
+[ ] Make buffers lazily allocated (rn they are allocated upon creation)
 [x] Vector
 [x] Dequeue
-[ ] HashMap (C++ std::unordered\_map)
+[x] HashMap (C++ std::unordered\_map)
 [ ] BTreeMap (C++ std::map)
 
 ## Vector

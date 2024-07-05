@@ -1,3 +1,9 @@
+#include "./vector.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #define VECTOR_DEFAULT 64
 
 #ifndef PANIC
@@ -7,15 +13,6 @@
         exit(1);                                                               \
     };
 #endif
-
-/*
- * Provides a priority queue implementation for use by the server for ordering
- * requests, prior to them being served.
- */
-#include "./vector.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 struct Vector vector_create(size_t size) {
     void *buffer = malloc(size * VECTOR_DEFAULT);
