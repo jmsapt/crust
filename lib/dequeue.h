@@ -13,7 +13,7 @@ struct Dequeue {
     unsigned int head;
 };
 
-struct Dequeue dequeue_create(size_t size);
+void dequeue_init(struct Dequeue *q, size_t size);
 int dequeue_pop_tail(struct Dequeue *q, void *element);
 void *dequeue_get(struct Dequeue *q, int i);
 int dequeue_pop_head(struct Dequeue *q, void *element);

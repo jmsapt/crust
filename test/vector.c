@@ -51,7 +51,8 @@ int main(void) {
     long n_samples[SAMPLE_SIZE];
     srand(RAND_SEED);
 
-    Vector vec = vector_create(sizeof(int));
+    Vector vec; 
+    vector_init(&vec, sizeof(int));
     for (int i = 0; i < SAMPLE_SIZE; i++, size *= 2) {
         clock_t t = clock();
         for (int j = 0; j < size; j++) {
@@ -81,7 +82,8 @@ int test_grow(const int len) {
 
     srand(RAND_SEED);
     // build vec
-    Vector vec = vector_create(sizeof(int));
+    Vector vec; 
+    vector_init(&vec, sizeof(int));
     for (int i = 0; i < len; i++) {
         int val = rand();
         vector_push(&vec, &val);
@@ -128,7 +130,8 @@ int test_get(const int len) {
 
     srand(RAND_SEED);
     // build vec
-    Vector vec = vector_create(sizeof(int));
+    Vector vec; 
+    vector_init(&vec, sizeof(int));
     for (int i = 0; i < len; i++) {
         int val = rand();
         vector_push(&vec, &val);
@@ -184,7 +187,8 @@ int test_push_pop(int len) {
     int buffer[MAX_BUFFER] = {-1};
 
     srand(RAND_SEED);
-    Vector vec = vector_create(sizeof(int));
+    Vector vec; 
+    vector_init(&vec, sizeof(int));
 
     // build vector/static buffer
     for (int i = 0; i < len; i++) {

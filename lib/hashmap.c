@@ -1,6 +1,7 @@
 #include "hashmap.h"
 #include "vector.h"
 
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -76,11 +77,16 @@ inline static int buffer_insert(Bucket **buffer, Bucket *bucket,
 }
 
 inline static int expand_buffer(HashMap *m, unsigned long n) {
-    unsigned long new_cap = m->capacity + n;
+    unsigned long new_cap;
+    if (m->capacity == 0)
+        new_cap = HASHMAP_DEFAULT;
+    else
+        new_cap = m->capacity + n;
+
+    // null check, and init new buffer
     Bucket **new_buf = malloc(sizeof(Bucket *) * new_cap);
     if (new_buf == NULL)
         return -1;
-
     for (int i = 0; i < new_cap; i++)
         new_buf[i] = NULL;
 
@@ -99,7 +105,9 @@ inline static int expand_buffer(HashMap *m, unsigned long n) {
     }
 
     // free old buffer
-    free(m->bucket_buf);
+    if (m->bucket_buf)
+        free(m->bucket_buf);
+
     m->bucket_buf = new_buf;
     m->capacity = new_cap;
 
@@ -115,10 +123,12 @@ inline static unsigned long buffer_index(unsigned long (*hash_fn)(const void *),
 /* Gets the raw bucket for a given key.
  */
 inline static Bucket *get_bucket(HashMap *m, void *key) {
+    // Don't think this is needed?? pls confirm
     // expand buffer if needed
-    double load = (double)m->len / m->capacity;
-    if (load >= MAX_LOAD_FACTOR)
-        expand_buffer(m, m->capacity);
+    // if (m->capacity == 0)
+    //     expand_buffer(m, m->capacity);
+    // else if ((double)m->len / m->capacity >= MAX_LOAD_FACTOR)
+    //     expand_buffer(m, m->capacity);
 
     Bucket *curr = m->bucket_buf[buffer_index(m->hash_fn, m->capacity, key)];
     while (curr) {
@@ -131,26 +141,16 @@ inline static Bucket *get_bucket(HashMap *m, void *key) {
 
 /* ------ Non-static definitions ------ */
 
-struct HashMap hashmap_create(const size_t key_size, const size_t val_size,
-                              unsigned long (*hash_fn)(const void *),
-                              int (*cmp_fn)(const void *a, const void *b)) {
-    Bucket **buffer = malloc(sizeof(Bucket *) * HASHMAP_DEFAULT);
-    NULL_CHECK(buffer, "Buffer for hashmap could not be allocated");
-
-    for (int i = 0; i < HASHMAP_DEFAULT; i++)
-        buffer[i] = NULL;
-
-    HashMap m = {
-        .bucket_buf = buffer,
-        .len = 0,
-        .capacity = HASHMAP_DEFAULT,
-        .key_size = key_size,
-        .val_size = val_size,
-        .hash_fn = hash_fn,
-        .cmp_fn = cmp_fn,
-    };
-
-    return m;
+void hashmap_init(struct HashMap *m, const size_t key_size,
+                  const size_t val_size, unsigned long (*hash_fn)(const void *),
+                  int (*cmp_fn)(const void *a, const void *b)) {
+    m->bucket_buf = NULL;
+    m->len = 0;
+    m->capacity = 0;
+    m->key_size = key_size;
+    m->val_size = val_size;
+    m->hash_fn = hash_fn;
+    m->cmp_fn = cmp_fn;
 }
 
 void hashmap_destroy(struct HashMap *m) {
@@ -170,14 +170,10 @@ void hashmap_destroy(struct HashMap *m) {
             free(prev->val);
             free(prev);
         }
-
-        // // free tail
-        // free(prev->key);
-        // free(prev->val);
-        // free(prev);
     }
 
-    free(m->bucket_buf);
+    if (m->bucket_buf)
+        free(m->bucket_buf);
 }
 
 /* Inserts key into the hashmap, placing the bucket at the index return by the
@@ -190,8 +186,7 @@ void hashmap_destroy(struct HashMap *m) {
  * Returns 0 on success, and <0 on error.
  */
 int hashmap_insert(struct HashMap *m, const void *key, const void *val) {
-    double load = ((double)m->len) / m->capacity;
-    if (load >= MAX_LOAD_FACTOR)
+    if (m->capacity == 0 || ((double)m->len) / m->capacity >= MAX_LOAD_FACTOR)
         expand_buffer(m, m->capacity);
 
     // Create new bucket, N
@@ -260,9 +255,12 @@ void *hashmap_keys(const HashMap *m) {
  * contained in the map.
  */
 int hashmap_contains(const struct HashMap *m, const void *key) {
+    // empty map, cannot conatain key
+    if (m->len == 0)
+        return 0;
+
     // check linked list for node
     unsigned long i = buffer_index(m->hash_fn, m->capacity, key);
-
     Bucket *curr = m->bucket_buf[i];
     while (curr) {
         if (m->cmp_fn(curr->key, key) == 0)

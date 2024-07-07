@@ -4,7 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define VECTOR_DEFAULT 64
+// default size of first vector allocation
+#define VECTOR_DEFAULT 8
 
 #ifndef PANIC
 #define PANIC(msg)                                                             \
@@ -14,29 +15,32 @@
     };
 #endif
 
-struct Vector vector_create(size_t size) {
-    void *buffer = malloc(size * VECTOR_DEFAULT);
-    if (buffer == NULL)
-        PANIC("buffer could not be allocated in vector_create");
-    struct Vector v;
-
-    v.buffer = buffer;
-    v.size = size;
-    v.len = 0;
-    v.capacity = VECTOR_DEFAULT;
-
-    return v;
+void vector_init(struct Vector *v, size_t size) {
+    v->buffer = NULL;
+    v->size = size;
+    v->len = 0;
+    v->capacity = 0;
 }
 
 int vector_grow(struct Vector *v, unsigned int n) {
     if (v == NULL)
         PANIC("vector pointer suppiled to vector_grow is NULL");
 
-    void *new_buf = realloc(v->buffer, v->size * (v->capacity + n));
+    void *new_buf;
+    unsigned long new_cap;
+    if (v->capacity == 0) {
+        new_cap = VECTOR_DEFAULT;
+        new_buf = realloc(v->buffer, v->size * VECTOR_DEFAULT);
+    }
+    else {
+        new_cap = v->capacity + n;
+        new_buf = realloc(v->buffer, v->size * new_cap);
+    }
+
     if (new_buf == NULL)
         return -1;
 
-    v->capacity = v->capacity + n;
+    v->capacity = new_cap;
     v->buffer = new_buf;
     return v->capacity;
 }
@@ -99,5 +103,7 @@ void *vector_get(struct Vector *v, int i) {
 void vector_destroy(struct Vector *v) {
     if (v == NULL)
         PANIC("vector pointer suppiled to vector_destroy is NULL");
-    free(v->buffer);
+
+    if (v->buffer)
+        free(v->buffer);
 }

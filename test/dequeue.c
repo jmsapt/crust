@@ -46,7 +46,8 @@ int main(void) {
     long n_samples[SAMPLE_SIZE];
     srand(RAND_SEED);
 
-    Dequeue deq = dequeue_create(sizeof(int));
+    Dequeue deq;
+    dequeue_init(&deq, sizeof(int));
     for (int i = 0; i < SAMPLE_SIZE; i++, size *= 2) {
         clock_t t = clock();
         for (int j = 0; j < size; j++) {
@@ -78,9 +79,10 @@ int test_get(const int len) {
 
     srand(RAND_SEED);
     // build vec
-    Dequeue vec = dequeue_create(sizeof(int));
+    Dequeue deq;
+    dequeue_init(&deq, sizeof(int));
     for (int i = 0; i < len; i++) {
-        dequeue_push_tail(&vec, &i);
+        dequeue_push_tail(&deq, &i);
         buffer[i] = i;
     }
 
@@ -88,7 +90,7 @@ int test_get(const int len) {
     int *val;
     for (int i = 0; i < sizeof(pos_indexes) / sizeof(int); i++) {
         int index = pos_indexes[i];
-        val = dequeue_get(&vec, index);
+        val = dequeue_get(&deq, index);
         if (val == NULL) {
             printf("Unexpected NULL (in pos index)\n");
             return -4;
@@ -102,7 +104,7 @@ int test_get(const int len) {
     // get negative index
     for (int i = 0; i < sizeof(neg_indexes) / sizeof(int); i++) {
         int index = neg_indexes[i];
-        val = dequeue_get(&vec, index);
+        val = dequeue_get(&deq, index);
         if (val == NULL) {
             printf("Unexpected NULL (in neg index)\n");
             return -4;
@@ -114,12 +116,12 @@ int test_get(const int len) {
 
     // invalid indexes
     for (int i = 0; i < sizeof(invalid_indexes) / sizeof(int); i++) {
-        val = dequeue_get(&vec, invalid_indexes[i]);
+        val = dequeue_get(&deq, invalid_indexes[i]);
         if (val != NULL)
             return -3;
     }
 
-    dequeue_destroy(&vec);
+    dequeue_destroy(&deq);
     return 0;
 }
 
@@ -133,8 +135,10 @@ int test_push_pop(int len) {
     int buffer[MAX_BUFFER] = {-1};
 
     srand(RAND_SEED);
-    Dequeue deq1 = dequeue_create(sizeof(int));
-    Dequeue deq2 = dequeue_create(sizeof(int));
+    Dequeue deq1;
+    dequeue_init(&deq1, sizeof(int));
+    Dequeue deq2;
+    dequeue_init(&deq2, sizeof(int));
 
     // build dequeue/static buffer
     for (int i = 0; i < len; i++) {
@@ -178,7 +182,9 @@ int test_push_pop(int len) {
 
     dequeue_destroy(&deq2);
     dequeue_destroy(&deq1);
-    Dequeue deq = dequeue_create(sizeof(int));
+
+    Dequeue deq;
+    dequeue_init(&deq, sizeof(int));
 
     for (int i = len / 2; i < len; i++) {
         dequeue_push_tail(&deq, &i);

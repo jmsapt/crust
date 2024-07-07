@@ -15,7 +15,7 @@ struct Vector {
 /*
  * Creates and allocates a new vector, returning NULL on failure.
  */
-struct Vector vector_create(size_t size);
+void vector_init(struct Vector *v, size_t size);
 
 /*
  * Grows vector by n elements.

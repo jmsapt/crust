@@ -22,7 +22,7 @@ struct Bucket {
     void *key;
 };
 
-struct HashMap hashmap_create(const size_t key_size, const size_t val_size,
+void hashmap_init(struct HashMap *m, const size_t key_size, const size_t val_size,
                               unsigned long (*hash_fn)(const void *),
                               int (*cmp_fn)(const void *a, const void *b));
 

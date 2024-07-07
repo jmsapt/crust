@@ -3,7 +3,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define QUEUE_DEFAULT 32
+// size of first buffer allocation
+#define QUEUE_DEFAULT 8
+
 #ifndef PANIC
 #define PANIC(msg)                                                             \
     {                                                                          \
@@ -14,22 +16,13 @@
 
 #define INDEX(head, cap, n) (((cap) + (head) + (n)) % (cap))
 
-struct Dequeue dequeue_create(size_t size) {
-    void *buffer = malloc(size * QUEUE_DEFAULT);
-
-    if (buffer == NULL)
-        PANIC("buffer could not be allocated in dequeue_create");
-
-    struct Dequeue q = {
-        .len = 0,
-        .head = 0,
-        .size = size,
-        .capacity = QUEUE_DEFAULT,
-        .buffer = buffer,
-    };
-
-    return q;
-};
+void dequeue_init(struct Dequeue *q, size_t size) {
+    q->len = 0;
+    q->head = 0;
+    q->capacity = 0;
+    q->buffer = NULL;
+    q->size = size;
+}
 
 void *dequeue_get(struct Dequeue *q, int i) {
     size_t offset;
@@ -71,26 +64,6 @@ int dequeue_pop_tail(struct Dequeue *q, void *element) {
 int dequeue_pop_head(struct Dequeue *q, void *element) {
     if (q == NULL)
         PANIC("queue pointer suppiled to queue_push is NULL");
-    // printf("Tail index = %d\n", INDEX(q->head, q->capacity, q->len - 1));
-    // printf("Head index = %d\n", INDEX(q->head, q->capacity, 0));
-    // for (int i = 0; i < q->capacity; i++) {
-    //     int val = *((int *)q->buffer + i);
-    //     if (val >= 0)
-    //         printf("%d ", val);
-    //     else
-    //         printf(". ");
-    // }
-    // printf("\n");
-    // for (int i = 0; i < q->len; i++) {
-    //     if (i == q->head)
-    //         printf("^ ");
-    //     else if (i == INDEX(q->head, q->capacity, q->len - 1))
-    //         printf("# ");
-    //     else
-    //         printf("  ");
-    // }
-
-    // printf("\n");
 
     memcpy(element, q->buffer + q->size * q->head, q->size);
     q->head = INDEX(q->head, q->capacity, 1);
@@ -130,27 +103,40 @@ int dequeue_push_head(struct Dequeue *q, void *element) {
 }
 
 int dequeue_grow(struct Dequeue *q, unsigned int n) {
-    unsigned int new_capacity = q->capacity + n;
-    void *new_buf = malloc(q->size * new_capacity);
+    unsigned int new_capacity;
+    if (q->capacity == 0)
+        new_capacity = QUEUE_DEFAULT;
+    else
+        new_capacity = q->capacity + n;
 
+    printf("HERE\n");
+    void *new_buf = malloc(q->size * new_capacity);
     if (new_buf == NULL)
         return -1;
+    
 
-    unsigned int tail = INDEX(q->head, q->capacity, q->len - 1);
-    if (q->head <= tail) {
-        memcpy(new_buf, q->buffer + q->size * q->head, q->size * q->len);
-    }
-    else {
-        unsigned int right_len = q->capacity - q->head;
-        unsigned int left_len = q->len - right_len;
+    // only move values if len is non zero
+    if (q->len != 0) {
+        unsigned int tail = INDEX(q->head, q->capacity, q->len - 1);
+        if (q->head <= tail) {
+            memcpy(new_buf, q->buffer + q->size * q->head, q->size * q->len);
+        }
+        else {
+            unsigned int right_len = q->capacity - q->head;
+            unsigned int left_len = q->len - right_len;
 
-        memcpy(new_buf, q->buffer + q->head * q->size, q->size * right_len);
-        memcpy(new_buf + right_len * q->size, q->buffer, q->size * left_len);
+            memcpy(new_buf, q->buffer + q->head * q->size, q->size * right_len);
+            memcpy(new_buf + right_len * q->size, q->buffer,
+                   q->size * left_len);
+        }
     }
+
+    // free previous buffer
+    if (q->buffer)
+        free(q->buffer);
 
     q->head = 0;
     q->capacity = new_capacity;
-    free(q->buffer);
     q->buffer = new_buf;
 
     return q->capacity;
@@ -160,5 +146,6 @@ void dequeue_destroy(struct Dequeue *q) {
     if (q == NULL)
         PANIC("qector pointer suppiled to vector_destroy is NULL");
 
-    free(q->buffer);
+    if (q->buffer)
+        free(q->buffer);
 }
