@@ -8,6 +8,7 @@ is because the structures and implemented using sized (but void pointer) buffers
 Data strucutures:
 - [x] [Vector](#vector) (stack)
 - [x] [Dequeue](#dequeue) (queue)
+- [ ] [PriorityQueue](#priorityqueue) (heap)
 - [ ] [LinkedList](#linkedlist)
 - [ ] [Channels](#channels) (Send & Recv - Rust only)
 - [x] [HashMap](#hashmap) (C++ std::unordered\_map)
@@ -26,6 +27,9 @@ Misc. Tasks:
 a random integer into the vector
 
 ## Dequeue
+Todo
+
+## PriorityQueue
 Todo
 
 ## LinkedList
